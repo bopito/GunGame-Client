@@ -2,21 +2,30 @@ import { Application, Assets, Sprite } from "pixi.js";
 
 (async () => {
     const isLocalhost = window.location.hostname === "localhost";
-    const SERVER_URL = isLocalhost ? "ws://192.168.1.108:8080/game" : "wss://your-server.com/game";
+    const assetBasePath = isLocalhost ? "/" : "/GunGame-Client/";
+    const SERVER_URL = isLocalhost 
+        ? "ws://192.168.1.108:8080/game" 
+        : "wss://your-server.com/game";  
+
     const socket = new WebSocket(SERVER_URL);
+    socket.onopen = () => console.log("WebSocket connected!");
+    socket.onerror = (error) => console.error("WebSocket error:", error);
+    socket.onclose = () => console.warn("⚠️ WebSocket closed!");
+
 
     const players: Record<string, Sprite> = {};
 
+    // Correct PixiJS 8 initialization
     const app = new Application();
     await app.init({ background: "#1099ab", resizeTo: window });
 
-    // Append the application canvas to the document body
+    // Append canvas properly
     document.getElementById("pixi-container")?.appendChild(app.canvas);
 
-    // Load the bunny texture
-    const playerTexture = await Assets.load("/assets/bunny.png");
+    // Ensure asset path is correct
+    const playerTexture = await Assets.load(`${assetBasePath}assets/bunny.png`);
 
-    // Create a bunny Sprite
+    // Create player sprite
     const player = new Sprite(playerTexture);
     player.anchor.set(0.5);
     player.position.set(app.screen.width / 2, app.screen.height / 2);
@@ -25,6 +34,7 @@ import { Application, Assets, Sprite } from "pixi.js";
     // Handle WebSocket messages (game state updates)
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
         for (const id in data.players) {
             if (id === "self") {
                 player.position.set(data.players[id].x, data.players[id].y);
@@ -39,30 +49,21 @@ import { Application, Assets, Sprite } from "pixi.js";
         }
     };
 
-    // Local Game loop
+    // Local Game Loop
     app.ticker.add(() => {
-        // graphics
-        // music
-        //
+        // Graphics
+        // Music
     });
 
-    // Send player input to server
+    // Handle Player Input
     document.addEventListener("keydown", (event) => {
         let direction: string | null = null;
 
         switch (event.key) {
-            case "ArrowRight": 
-                direction = "right";
-                break;
-            case "ArrowLeft": 
-                direction = "left"; 
-                break;
-            case "ArrowUp": 
-                direction = "up"; 
-                break;
-            case "ArrowDown": 
-                direction = "down"; 
-                break;
+            case "ArrowRight": direction = "right"; break;
+            case "ArrowLeft": direction = "left"; break;
+            case "ArrowUp": direction = "up"; break;
+            case "ArrowDown": direction = "down"; break;
         }
 
         if (direction) {
@@ -70,9 +71,4 @@ import { Application, Assets, Sprite } from "pixi.js";
         }
     });
 
-
 })();
-
-
-
-
