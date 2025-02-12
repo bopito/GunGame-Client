@@ -1,9 +1,9 @@
 import { Application, Assets, Sprite } from "pixi.js";
 
 (async () => {
-    const url = "ws://192.168.1.108:8080/game"
-    //const SERVER_URL = "ws://localhost:8080/game";  // Change if hosting remotely
-    const socket = new WebSocket(url);
+    const isLocalhost = window.location.hostname === "localhost";
+    const SERVER_URL = isLocalhost ? "ws://192.168.1.108:8080/game" : "wss://your-server.com/game";
+    const socket = new WebSocket(SERVER_URL);
 
     const players: Record<string, Sprite> = {};
 

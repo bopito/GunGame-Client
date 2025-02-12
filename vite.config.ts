@@ -1,16 +1,18 @@
 import { defineConfig } from "vite";
 
-// https://vite.dev/config/
-export default defineConfig({
-  server: {
-    headers: {
-        "Content-Security-Policy": "script-src 'self' 'unsafe-eval'"
-    },
-    port: 8080,
-    open: true,
-    watch: {
-        usePolling: true
-    }
-  }
-    
+export default defineConfig(({ command }) => {
+    return {
+        base: command === "serve" ? "/" : "/GunGame-Client/", 
+        server: {
+            port: 8080,
+            strictPort: true,
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; img-src 'self' data:;"
+            }
+        },
+        build: {
+            outDir: "dist"
+        }
+    };
 });
