@@ -8,7 +8,7 @@ import { Application, Assets, Sprite } from "pixi.js";
     const players: Record<string, Sprite> = {};
 
     const app = new Application();
-    await app.init({ background: "#1099bb", resizeTo: window });
+    await app.init({ background: "#1099ab", resizeTo: window });
 
     // Append the application canvas to the document body
     document.getElementById("pixi-container")?.appendChild(app.canvas);
