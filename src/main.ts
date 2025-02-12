@@ -1,11 +1,12 @@
 import { Application, Assets, Sprite } from "pixi.js";
 
 (async () => {
-    const SERVER_URL = "ws://localhost:8080/game";  // Change if hosting remotely
-    const socket = new WebSocket(SERVER_URL);
+    const url = "ws://192.168.1.108:8080/game"
+    //const SERVER_URL = "ws://localhost:8080/game";  // Change if hosting remotely
+    const socket = new WebSocket(url);
 
     const players: Record<string, Sprite> = {};
-    
+
     const app = new Application();
     await app.init({ background: "#1099bb", resizeTo: window });
 
@@ -38,9 +39,11 @@ import { Application, Assets, Sprite } from "pixi.js";
         }
     };
 
-        // Game loop
+    // Local Game loop
     app.ticker.add(() => {
-        // PixiJS automatically updates each frame
+        // graphics
+        // music
+        //
     });
 
     // Send player input to server
@@ -50,24 +53,20 @@ import { Application, Assets, Sprite } from "pixi.js";
         switch (event.key) {
             case "ArrowRight": 
                 direction = "right";
-                player.x += 10; 
                 break;
             case "ArrowLeft": 
                 direction = "left"; 
-                player.x -= 10;
                 break;
             case "ArrowUp": 
                 direction = "up"; 
-                player.y += 10;
                 break;
             case "ArrowDown": 
                 direction = "down"; 
-                player.y -= 10;
                 break;
         }
 
         if (direction) {
-            //socket.send(JSON.stringify({ action: "move", direction }));
+            socket.send(JSON.stringify({ action: "move", direction }));
         }
     });
 
