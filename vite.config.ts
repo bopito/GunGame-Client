@@ -8,10 +8,10 @@ export default defineConfig(({ command }) => ({
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Content-Security-Policy":
-                "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " +  // ✅ Allows Base64, blob URLs
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " + 
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-                "connect-src 'self' ws://192.168.1.108:8080 wss://your-server.com; " +
-                "img-src 'self' data: blob:; " +  // ✅ Fully allows Base64 images
+                "connect-src 'self' ws://localhost:6969 wss://your-server.com; " +
+                "img-src 'self' data: blob:; " +  
                 "worker-src 'self' blob:;"
         }
     },

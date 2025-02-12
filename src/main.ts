@@ -4,13 +4,30 @@ import { Application, Assets, Sprite } from "pixi.js";
     const isLocalhost = window.location.hostname === "localhost";
     const assetBasePath = isLocalhost ? "/" : "/GunGame-Client/";
     const SERVER_URL = isLocalhost 
-        ? "ws://192.168.1.108:8080/game" 
+        ? "ws://localhost:6969/game" 
         : "wss://your-server.com/game";  
 
     const socket = new WebSocket(SERVER_URL);
-    socket.onopen = () => console.log("WebSocket connected!");
-    socket.onerror = (error) => console.error("WebSocket error:", error);
-    socket.onclose = () => console.warn("⚠️ WebSocket closed!");
+   
+    let isWebSocketConnected = false;
+    const messageQueue: string[] = []; // ✅ Queue messages while waiting for connection
+
+    socket.onopen = () => {
+        console.log("✅ WebSocket connected!");
+        isWebSocketConnected = true;
+
+        // ✅ Send any messages that were queued while connecting
+        while (messageQueue.length > 0) {
+            socket.send(messageQueue.shift()!);
+        }
+    };
+
+    socket.onerror = (error) => console.error("❌ WebSocket error:", error);
+    socket.onclose = () => {
+        console.warn("⚠️ WebSocket closed!");
+        isWebSocketConnected = false;
+    };
+
 
 
     const players: Record<string, Sprite> = {};
@@ -27,9 +44,11 @@ import { Application, Assets, Sprite } from "pixi.js";
 
     // Create player sprite
     const player = new Sprite(playerTexture);
+    const playerIDText = new Text('undefined');
     player.anchor.set(0.5);
     player.position.set(app.screen.width / 2, app.screen.height / 2);
     app.stage.addChild(player);
+    //player.addChild(playerIDText);
 
     // Handle WebSocket messages (game state updates)
     socket.onmessage = (event) => {
@@ -58,16 +77,23 @@ import { Application, Assets, Sprite } from "pixi.js";
     // Handle Player Input
     document.addEventListener("keydown", (event) => {
         let direction: string | null = null;
-
+    
         switch (event.key) {
             case "ArrowRight": direction = "right"; break;
             case "ArrowLeft": direction = "left"; break;
             case "ArrowUp": direction = "up"; break;
             case "ArrowDown": direction = "down"; break;
         }
-
+    
         if (direction) {
-            socket.send(JSON.stringify({ action: "move", direction }));
+            const message = JSON.stringify({ action: "move", direction });
+    
+            if (isWebSocketConnected) {
+                socket.send(message);
+            } else {
+                console.warn("⏳ WebSocket not connected yet. Queuing message:", message);
+                messageQueue.push(message); // ✅ Store messages until connection is ready
+            }
         }
     });
 
