@@ -1,21 +1,22 @@
 {
-  "name": "gungame-client",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "start": "npm run dev",
-    "build": "tsc && vite build",
-    "dev": "vite"
-  },
-  "dependencies": {
-    "pixi.js": "^8.6.2"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.16.0",
-    "eslint": "^9.16.0",
-    "gh-pages": "^6.3.0",
-    "typescript": "~5.7.2",
-    "vite": "^6.0.2"
-  }
+    "name": "gungame-client",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "npm run dev",
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "deploy": "npm run build && gh-pages -d dist"
+    },
+    "dependencies": {
+        "pixi.js": "^8.6.2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.16.0",
+        "eslint": "^9.16.0",
+        "gh-pages": "^6.3.0",
+        "typescript": "~5.7.2",
+        "vite": "^6.0.2"
+    }
 }
