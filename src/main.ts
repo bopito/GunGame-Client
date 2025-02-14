@@ -28,7 +28,7 @@ import { Application, Assets, Sprite, TilingSprite, Container, Text, TextStyle }
     camera.addChild(background); // Add to camera
 
     // Load Player Sprite
-    const playerTexture = await Assets.load(`${assetBasePath}assets/player.png`);
+    const playerTexture = await Assets.load(`${assetBasePath}assets/fluff.png`);
 
     // Store Reference to Player's Sprite (Set when WebSocket confirms)
     let player: Sprite | null = null;
@@ -68,10 +68,10 @@ import { Application, Assets, Sprite, TilingSprite, Container, Text, TextStyle }
             if (!players[id]) {
                 const newPlayer = new Sprite(playerTexture);
                 newPlayer.anchor.set(0.5);
-                newPlayer.width = 50;
-                newPlayer.height = 50;
+                newPlayer.width = 100;
+                newPlayer.height = 100;
                 newPlayer.position.set(data.players[id].x, data.players[id].y);
-                newPlayer.tint = data.players[id].team === 1 ? 0xff0000 : 0x0000ff;
+                //newPlayer.tint = data.players[id].team === 1 ? 0xff0000 : 0x0000ff;
 
                 camera.addChild(newPlayer); // Add new players to camera
                 players[id] = newPlayer;
