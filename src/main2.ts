@@ -1,8 +1,13 @@
 import * as BABYLON from "@babylonjs/core";
 import "@babylonjs/loaders";
 import { GameGUI } from "./gui.ts";
+import { Player } from "./player.ts";
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+    //
+    // WebSocket
+    //
     const isLocalhost: boolean = window.location.hostname === "localhost";
     const assetBasePath: string = isLocalhost ? "/" : "/GunGame-Client/";
     const SERVER_URL: string = isLocalhost
@@ -11,15 +16,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let socket: WebSocket;
     let isWebSocketConnected: boolean = false;
-    let playerId: string | null = null;
     const messageQueue: string[] = [];
-    const players: Record<string, BABYLON.Mesh> = {};
-    console.log(Object.keys(players).length);
 
-    // connect to server
-    // server create new player
-    // server send player.id --> but only to the client that just joined
-    // client set player.id
+    //
+    // Entities
+    //
+    let playerId: string = "undefined";
+    const players: Record<string, Player> = {};
+
 
     // Get canvas element
     const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -35,9 +39,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gui = new GameGUI();
 
     // Create Fixed Camera (45-degree Angle)
-    const camera = new BABYLON.FreeCamera("FixedCamera", new BABYLON.Vector3(0, 80, -80), scene);
+    const camera = new BABYLON.FollowCamera("FixedCamera", new BABYLON.Vector3(0, 80, -80), scene);
     camera.rotation.set(Math.PI / 4, 0, 0); // 45-degree downward angle
-    camera.attachControl(canvas, false);
+    camera.attachControl()
 
     // Lighting
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
@@ -77,60 +81,71 @@ document.addEventListener("DOMContentLoaded", async () => {
     connectWebSocket();
 
     // Handle WebSocket Messages
+    
+
+    
+
+    // Handle WebSocket Messages
     function handleWebSocketMessage(event: MessageEvent): void {
         const data = JSON.parse(event.data);
-    
-        // Step 1: Assign player ID when received from server
+
+        // Step 1: Assign player ID when received from the server
         if (data.type === "assign_id") {
             playerId = data.playerId;
             console.log(`Assigned Player ID: ${playerId}`);
-            return;
         }
-    
+
         // Step 2: Process all players
         if (data.players) {
-            // Get the list of player IDs currently received from the server
-            const serverPlayerIds = new Set(Object.keys(data.players));
-        
-            for (const id in data.players) {
-                const { x, y, angle } = data.players[id];
-        
-                if (!players[id]) {
-                    console.log(`Creating new player: ${id}`);
-        
-                    // Create a cube player
-                    const newPlayerMesh = BABYLON.MeshBuilder.CreateBox(`player_${id}`, { size: 2 }, scene);
-                    newPlayerMesh.position.set(x, 1, -y);
-        
-                    // Store the player
-                    players[id] = newPlayerMesh;
-                }
-        
-                // Update position & rotation every time
-                players[id].position.set(x, 1, -y);
-                players[id].rotation.y = angle;
-        
-                // Update GUI Player List
-                gui.updatePlayer(id, x, y);
+            const serverPlayers = Object.values(data.players) as Player[];
 
-            }
-        
-            // **Remove Disconnected Players** (if they're not in the server data anymore)
-            for (const id in players) {
-                if (!serverPlayerIds.has(id)) {
-                    console.log(`Removing player: ${id}`);
-        
-                    // Remove from scene
-                    players[id].dispose();
-                    delete players[id];
-        
-                    // Remove from GUI
-                    gui.removePlayer(id);
+            for (const playerData of serverPlayers) {
+
+                // Add New players
+                if (!players[playerData.id]) {
+                    console.log(`Creating new player: ${playerData.id}`);
+                    // Instantiate an instance of Player
+                    const newPlayer = new Player(
+                        playerData.id,
+                        playerData.x,
+                        playerData.y,
+                        playerData.angle,
+                        playerData.team,
+                        playerData.health,
+                        playerData.score
+                    );
+                    // Create 3D object
+                    const newPlayerMesh = BABYLON.MeshBuilder.CreateBox(`player_${playerData.id}`, { size: 2 }, scene);
+                    newPlayerMesh.position.set(playerData.x, 1, -playerData.y);
+                    newPlayer.mesh = newPlayerMesh;
+                    players[playerData.id] = newPlayer;
                 }
+
+                // Update position & rotation
+                players[playerData.id].x = playerData.x;
+                players[playerData.id].y = playerData.y;
+                players[playerData.id].angle = playerData.angle;
+                players[playerData.id].health = playerData.health;
+                players[playerData.id].score = playerData.score;
+
+                // Update mesh position
+                if (players[playerData.id].mesh) {
+                    players[playerData.id].mesh!.position.set(playerData.x, 1, -playerData.y);
+                    players[playerData.id].mesh!.rotation.y = playerData.angle;
+                }
+
+                // Update GUI Player List
+                gui.updatePlayer(playerData.id, playerData.x, playerData.y, playerData.health, playerData.score);
+            }
+
+            // Only update camera if the player exists
+            if (players[playerId]?.mesh) {
+                updateCamera(players[playerId].mesh!);
             }
         }
-        
     }
+
+    
     
     
 
@@ -155,27 +170,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         socket.send(JSON.stringify({ action: "move", keys }));
     }
 
-    function updateCamera(): void {
-        
-        if (!playerId  ) return; // Ensure playerId is valid
-        if (Object.keys(players).length !== 0 ) return; // Ensure playerId is valid
-        const player = players[0]; // Get the correct player from the server
-        console.log("test:" + players[0]);
-        
+    function updateCamera(playerMesh: BABYLON.Mesh): void {
+        if (!playerMesh) return;
     
-        camera.position.x = player.position.x;
-        camera.position.z = player.position.z - 40;
+        camera.position.x += (playerMesh.position.x - camera.position.x); // * 0.9; // smooth
+        camera.position.z += (playerMesh.position.z - camera.position.z - 40);
         camera.position.y = 40;
-    
         camera.rotation.set(Math.PI / 4, 0, 0);
     }
+    
 
     engine.runRenderLoop(() => {
         try {
-            updateCamera();
             scene.render();
         } catch (error) {
-            console.error("❌ Error in render loop:", error);
+            //console.error("Error in render loop:", error);
         }
     });
 

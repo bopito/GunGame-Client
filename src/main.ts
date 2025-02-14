@@ -25,7 +25,7 @@ import { Application, Assets, Sprite, TilingSprite, Container, Text, TextStyle }
     // Load Background as TilingSprite
     const bgTexture = await Assets.load(`${assetBasePath}assets/grass_background.png`);
     const background = new TilingSprite(bgTexture, app.screen.width * 2, app.screen.height * 2);
-    camera.addChild(background); // Add to camera
+    app.stage.addChild(background); // Add to camera
 
     // Load Player Sprite
     const playerTexture = await Assets.load(`${assetBasePath}assets/fluff.png`);
