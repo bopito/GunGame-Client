@@ -10,7 +10,7 @@ export class GameGUI {
 
         // Create Player List Panel
         this.playerListPanel = new GUI.StackPanel();
-        this.playerListPanel.width = "500px";
+        this.playerListPanel.width = "350px";
         this.playerListPanel.height = "300px";
         this.playerListPanel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
         this.playerListPanel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
@@ -33,13 +33,13 @@ export class GameGUI {
     }
 
     // **Add or Update a Player in GUI**
-    updatePlayer(playerId: string, x: number, y: number): void {
+    updatePlayer(playerId: string, x: number, y: number, score: number, health: number): void {
         if (!this.playerTextBlocks[playerId]) {
             // **Create a new text block for the player**
             const playerText = new GUI.TextBlock();
             playerText.height = "30px";
             playerText.color = "white";
-            playerText.fontSize = 14;
+            playerText.fontSize = 11;
             playerText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
 
             this.playerListPanel.addControl(playerText);
@@ -47,7 +47,7 @@ export class GameGUI {
         }
 
         // **Update Player's Info**
-        this.playerTextBlocks[playerId].text = `ID: ${playerId} | X: ${x} | Y: ${y}`;
+        this.playerTextBlocks[playerId].text = `ID: ${playerId.substring(0,20)} | X: ${x} | Y: ${y} | SCORE: ${score} | HEALTH: ${health}`;
     }
 
     // **Remove a Player from GUI**

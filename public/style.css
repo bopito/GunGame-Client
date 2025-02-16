@@ -5,16 +5,8 @@ body {
     background-color: #000000;
 }
 
-#app {
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-canvas {
+#gameCanvas {
+    cursor: url("assets/crosshair.png") 16 16, crosshair;
     display: block;
     width: 100%;
     height: 100%;
