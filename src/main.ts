@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Lighting
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.8;
-
+    
     // Create Ground (500x500)
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
     const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
@@ -116,6 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         playerData.id,
                         playerData.x,
                         playerData.y,
+                        playerData.z,
                         playerData.angle,
                         playerData.team,
                         playerData.health,
@@ -123,26 +124,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                     );
                     // Create 3D object
                     const newPlayerMesh = BABYLON.MeshBuilder.CreateBox(`player_${playerData.id}`, { size: 2 }, scene);
-                    newPlayerMesh.position.set(playerData.x, 1, -playerData.y);
+                    newPlayerMesh.position.set(playerData.x, 1, -playerData.z);
                     newPlayer.mesh = newPlayerMesh;
                     players[playerData.id] = newPlayer;
+
+                    console.log(newPlayer);
+                    
                 }
 
                 // Update position & rotation
                 players[playerData.id].x = playerData.x;
-                players[playerData.id].y = playerData.y;
+                players[playerData.id].z = playerData.z;
                 players[playerData.id].angle = playerData.angle;
                 players[playerData.id].health = playerData.health;
                 players[playerData.id].score = playerData.score;
 
                 // Update mesh position
                 if (players[playerData.id].mesh) {
-                    players[playerData.id].mesh!.position.set(playerData.x, 1, -playerData.y);
+                    players[playerData.id].mesh!.position.set(playerData.x, 1, -playerData.z);
                     players[playerData.id].mesh!.rotation.y = playerData.angle;
                 }
 
                 // Update GUI Player List
-                gui.updatePlayer(playerData.id, playerData.x, playerData.y, playerData.health, playerData.score);
+                gui.updatePlayer(playerData.id, playerData.x, playerData.y, playerData.z, playerData.health, playerData.score);
             }
 
             // Only update camera if the player exists

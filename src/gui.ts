@@ -33,7 +33,7 @@ export class GameGUI {
     }
 
     // **Add or Update a Player in GUI**
-    updatePlayer(playerId: string, x: number, y: number, score: number, health: number): void {
+    updatePlayer(playerId: string, x: number, y: number, z: number, score: number, health: number): void {
         if (!this.playerTextBlocks[playerId]) {
             // **Create a new text block for the player**
             const playerText = new GUI.TextBlock();
@@ -47,7 +47,7 @@ export class GameGUI {
         }
 
         // **Update Player's Info**
-        this.playerTextBlocks[playerId].text = `ID: ${playerId.substring(0,20)} | X: ${x} | Y: ${y} | SCORE: ${score} | HEALTH: ${health}`;
+        this.playerTextBlocks[playerId].text = `ID: ${playerId.substring(0,20)} | X: ${x} | Y: ${y} | Z: ${z} | SCORE: ${score} | HEALTH: ${health}`;
     }
 
     // **Remove a Player from GUI**
