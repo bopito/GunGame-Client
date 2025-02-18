@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Lighting
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.8;
-    
+
     // Create Ground (500x500)
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
     const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
@@ -157,8 +157,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     
-
+    //
     // Handle Player Input
+    //
     const keys: Record<string, boolean> = {};
     scene.onKeyboardObservable.add((kbInfo) => {
         const key = kbInfo.event.key.toLowerCase();
@@ -174,13 +175,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
+    //
+    // Send Keys to Server
+    //
     function sendMovementUpdate(): void {
         if (!isWebSocketConnected || playerId === null) return;
         socket.send(JSON.stringify({ action: "move", keys }));
     }
 
+    //
+    // Detect Cursor Movement in Scene
+    //
     scene.onPointerMove = (evt) => {
-        console.log("Pointer moved:", evt.clientX, evt.clientY);
+        //console.log("Pointer moved:", evt.clientX, evt.clientY);
     
         if (!players[playerId]) {
             console.warn("Player data not found for playerId:", playerId);
@@ -191,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const pickResult = scene.pick(scene.pointerX, scene.pointerY);
     
         if (pickResult?.hit) {
-            console.log("Raycast hit:", pickResult.pickedMesh?.name);
+            //console.log("Raycast hit:", pickResult.pickedMesh?.name);
     
             const player = players[playerId];
             const mousePosition = pickResult.pickedPoint;
@@ -207,22 +214,51 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // Rotate player smoothly
                 player.mesh!.rotation.y = targetAngle;
     
-                sendRotationUpdate(player);
+                sendRotationUpdate(targetAngle);
             }
         } else {
-            console.warn("Raycast did NOT hit any object.");
+            //console.warn("Raycast did NOT hit any object.");
         }
     };
     
-
-    function sendRotationUpdate(player: Player) {
+    //
+    // Send Player y-Rotation to Server
+    //
+    function sendRotationUpdate(angle: number) {
         if (!isWebSocketConnected) return;
         socket.send(JSON.stringify({ 
             action: "rotate", 
-            angle: player.mesh!.rotation.y 
+            angle: angle
         }));
     }
     
+    //
+    // Capture Mouse-Click Event in Scene
+    //
+    scene.onPointerDown = function (event, pickResult){
+        // Left Click
+        if(event.button == 0){
+                const vector = pickResult.pickedPoint;
+                if (vector) {
+                    console.log('left mouse click: ' + vector.x + ',' + vector.y + ',' + vector.z );
+                }
+        }
+        // Right Click
+        if(event.button == 2){
+                
+        }
+    }
+
+    //
+    // Send Mouse Event to Server
+    //
+    function sendMouseUpdate(angle: number) {
+        if (!isWebSocketConnected) return;
+        socket.send(JSON.stringify({ 
+            action: "mouseEvent", 
+            angle: angle
+        }));
+    }
 
     function updateCamera(playerMesh: BABYLON.Mesh): void {
         if (!playerMesh) return;
