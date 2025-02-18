@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Entities
     //
     let playerId: string = "undefined";
-    const players: Record<string, Player> = {};
+    var localPlayers: Record<string, Player> = {};
 
 
     // Get canvas element
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.8;
 
-    // Create Ground (500x500)
+    // Create Ground 
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
     const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
     groundMaterial.diffuseTexture = new BABYLON.Texture(`${assetBasePath}assets/grass_background.png`, scene);
@@ -96,62 +96,73 @@ document.addEventListener("DOMContentLoaded", async () => {
     function handleWebSocketMessage(event: MessageEvent): void {
         const data = JSON.parse(event.data);
 
-        // Step 1: Assign player ID when received from the server
+        // Assign Local Player an ID
         if (data.type === "assign_id") {
             playerId = data.playerId;
             console.log(`Assigned Player ID: ${playerId}`);
         }
 
-        // Step 2: Process all players
-        if (data.players) {
-            const serverPlayers = Object.values(data.players) as Player[];
+        // Remove Disconnected Players
+        // if (data.type === "player_removed") {
+        //     const disconnectedPlayerID = data.playerID;
+        //     delete localPlayers.disconnectedPlayerID;
+        //     console.log(`Removed Player: ${playerId}`);
+        // }
 
+        // Step 2: Process all players
+        if (data.entities) {
+            const serverPlayers = Object.values(data.entities.players) as Player[];
+            const serverPlayerIds = new Set(serverPlayers.map(player => player.id));
+            
             for (const playerData of serverPlayers) {
+                // Remove disconnected players
+                for (const id in localPlayers) {
+                    if (!serverPlayerIds.has(id)) {
+                        console.log(`Removing player not in server state: ${id}`);
+                        if(localPlayers[id]) {
+                            localPlayers[id].mesh!.dispose(); // Remove from Babylon.js
+                            delete localPlayers[id];
+                            gui.removePlayer(id);
+                        }
+                    }
+                }
 
                 // Add New players
-                if (!players[playerData.id]) {
+                if (!localPlayers[playerData.id]) {
                     console.log(`Creating new player: ${playerData.id}`);
                     // Instantiate an instance of Player
-                    const newPlayer = new Player(
-                        playerData.id,
-                        playerData.x,
-                        playerData.y,
-                        playerData.z,
-                        playerData.angle,
-                        playerData.team,
-                        playerData.health,
-                        playerData.score
-                    );
+                    const newPlayer = playerData;
+                    
                     // Create 3D object
                     const newPlayerMesh = BABYLON.MeshBuilder.CreateBox(`player_${playerData.id}`, { size: 2 }, scene);
                     newPlayerMesh.position.set(playerData.x, 1, -playerData.z);
                     newPlayer.mesh = newPlayerMesh;
-                    players[playerData.id] = newPlayer;
+                    localPlayers[playerData.id] = newPlayer;
 
                     console.log(newPlayer);
                     
                 }
 
                 // Update position & rotation
-                players[playerData.id].x = playerData.x;
-                players[playerData.id].z = playerData.z;
-                players[playerData.id].angle = playerData.angle;
-                players[playerData.id].health = playerData.health;
-                players[playerData.id].score = playerData.score;
+                localPlayers[playerData.id].x = playerData.x;
+                localPlayers[playerData.id].z = playerData.z;
+                localPlayers[playerData.id].angle = playerData.angle;
+                localPlayers[playerData.id].health = playerData.health;
+                localPlayers[playerData.id].score = playerData.score;
 
                 // Update mesh position
-                if (players[playerData.id].mesh) {
-                    players[playerData.id].mesh!.position.set(playerData.x, 1, -playerData.z);
-                    players[playerData.id].mesh!.rotation.y = playerData.angle;
+                if (localPlayers[playerData.id].mesh) {
+                    localPlayers[playerData.id].mesh!.position.set(playerData.x, 1, -playerData.z);
+                    localPlayers[playerData.id].mesh!.rotation.y = playerData.angle;
                 }
 
                 // Update GUI Player List
-                gui.updatePlayer(playerData.id, playerData.x, playerData.y, playerData.z, playerData.health, playerData.score);
+                gui.updatePlayer(playerData);
             }
 
             // Only update camera if the player exists
-            if (players[playerId]?.mesh) {
-                updateCamera(players[playerId].mesh!);
+            if (localPlayers[playerId]?.mesh) {
+                updateCamera(localPlayers[playerId].mesh!);
             }
         }
     }
@@ -189,8 +200,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     scene.onPointerMove = (evt) => {
         //console.log("Pointer moved:", evt.clientX, evt.clientY);
     
-        if (!players[playerId]) {
-            console.warn("Player data not found for playerId:", playerId);
+        if (!localPlayers[playerId]) {
+            console.warn("Player data not found for local player:", playerId);
             return;
         }
     
@@ -200,7 +211,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (pickResult?.hit) {
             //console.log("Raycast hit:", pickResult.pickedMesh?.name);
     
-            const player = players[playerId];
+            const player = localPlayers[playerId];
             const mousePosition = pickResult.pickedPoint;
     
             if (mousePosition) {

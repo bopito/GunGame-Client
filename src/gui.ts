@@ -1,4 +1,5 @@
 import * as GUI from "@babylonjs/gui";
+import Player from "./player";
 
 export class GameGUI {
     private advancedTexture: GUI.AdvancedDynamicTexture;
@@ -33,8 +34,8 @@ export class GameGUI {
     }
 
     // **Add or Update a Player in GUI**
-    updatePlayer(playerId: string, x: number, y: number, z: number, score: number, health: number): void {
-        if (!this.playerTextBlocks[playerId]) {
+    updatePlayer(player: Player): void {
+        if (!this.playerTextBlocks[player.id]) {
             // **Create a new text block for the player**
             const playerText = new GUI.TextBlock();
             playerText.height = "30px";
@@ -43,11 +44,11 @@ export class GameGUI {
             playerText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
 
             this.playerListPanel.addControl(playerText);
-            this.playerTextBlocks[playerId] = playerText;
+            this.playerTextBlocks[player.id] = playerText;
         }
 
         // **Update Player's Info**
-        this.playerTextBlocks[playerId].text = `ID: ${playerId.substring(0,20)} | X: ${x} | Y: ${y} | Z: ${z} | SCORE: ${score} | HEALTH: ${health}`;
+        this.playerTextBlocks[player.id].text = `ID: ${player.id.substring(0,20)} | X: ${player.x} | Y: ${player.y} | Z: ${player.z} | SCORE: ${player.score} | HEALTH: ${player.health}`;
     }
 
     // **Remove a Player from GUI**
