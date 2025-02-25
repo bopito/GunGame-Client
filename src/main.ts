@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Send Keys to Server
     //
     function sendMovementUpdate(): void {
-        if (!isWebSocketConnected || playerId === null) return;
+        if (!isWebSocketConnected || playerId === "undefined") return;
         socket.send(JSON.stringify({ action: "move", keys }));
     }
 
@@ -201,7 +201,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         //console.log("Pointer moved:", evt.clientX, evt.clientY);
     
         if (!localPlayers[playerId]) {
-            console.warn("Player data not found for local player:", playerId);
+            //console.warn("Player data not found for local player:", playerId);
             return;
         }
     
@@ -236,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Send Player y-Rotation to Server
     //
     function sendRotationUpdate(angle: number) {
-        if (!isWebSocketConnected) return;
+        if (!isWebSocketConnected || playerId === "undefined") return;
         socket.send(JSON.stringify({ 
             action: "rotate", 
             angle: angle
@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Send Mouse Event to Server
     //
     function sendMouseUpdate(angle: number) {
-        if (!isWebSocketConnected) return;
+        if (!isWebSocketConnected || playerId === "undefined") return;
         socket.send(JSON.stringify({ 
             action: "mouseEvent", 
             angle: angle
