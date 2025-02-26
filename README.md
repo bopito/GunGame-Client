@@ -12,4 +12,4 @@ yarn install
 ```
 
 ## Play Now
-🚀 [Live Demo](https://example.com)
+🚀 [Play GunGame](https://gungame.io)
