@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const keys: Record<string, boolean> = {};
     scene.onKeyboardObservable.add((kbInfo) => {
         const key = kbInfo.event.key.toLowerCase();
-
+        console.log("test");
         // Movement keys
         if (["a", "w", "s", "d"].includes(key)) {
             if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN) {
@@ -204,6 +204,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYUP) {
                 keys[key] = false;
                 sendMovementUpdate();
+            }
+        }
+
+        // Reload action (R key)
+        if (key === "r" && kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN) {
+            console.log("Reloading weapon...");
+
+            // Send 'reload' action to the server
+            if (isWebSocketConnected && playerId !== "undefined") {
+                socket.send(JSON.stringify({
+                    action: "reload",
+                    playerId: playerId
+                }));
             }
         }
     });
@@ -268,19 +281,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     //
     // Capture Mouse-Click Event in Scene
     //
-    scene.onPointerDown = function (event, pickResult){
-        // Left Click
-        if(event.button == 0){
-                const vector = pickResult.pickedPoint;
-                if (vector) {
-                    console.log('left mouse click: ' + vector.x + ',' + vector.y + ',' + vector.z );
-                }
-        }
-        // Right Click
-        if(event.button == 2){
+    scene.onPointerDown = function (event, pickResult) {
+        // Left Click (Shoot)
+        if (event.button == 0) {
+            const vector = pickResult.pickedPoint;
+            if (vector) {
+                console.log(`Left mouse click (shoot) at: ${vector.x}, ${vector.y}, ${vector.z}`);
 
+                // Send 'shoot' action to the server
+                if (isWebSocketConnected && playerId !== "undefined") {
+                    socket.send(JSON.stringify({
+                        action: "shoot",
+                        playerId: playerId
+                    }));
+                }
+            }
         }
-    }
+
+        // Right Click (Reserved for future use)
+        if (event.button == 2) {
+            console.log("Right mouse click detected (No action assigned).");
+        }
+    };
+
 
     //
     // Send Mouse Event to Server
@@ -302,9 +325,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         camera.rotation.set(Math.PI / 4, 0, 0);
     }
 
+    /**
+     * Handles player state updates (HP, Ammo, Weapon Name)
+     */
+    function handlePlayerUpdate(playerData: any) {
+        if (localPlayers[playerData.id]) {
+            const player = localPlayers[playerData.id];
+            player.health = playerData.health;
+            if (playerData.currentWeapon) {
+                player.currentWeapon.name = playerData.currentWeapon.name;
+                player.currentWeapon.currentAmmo = playerData.currentWeapon.currentAmmo;
+                player.currentWeapon.reserveAmmo = playerData.currentWeapon.reserveAmmo;
+            }
+            gui.updateHUD(player); //
+        }
+    }
+
 
     engine.runRenderLoop(() => {
         try {
+            if (localPlayers[playerId]) {
+                gui.updateHUD(localPlayers[playerId]);
+            }
             scene.render();
         } catch (error) {
             //console.error("Error in render loop:", error);
