@@ -1,4 +1,5 @@
 import * as GUI from "@babylonjs/gui";
+import * as BABYLON from "@babylonjs/core";
 import Player from "./player";
 
 export class GameGUI {
@@ -8,6 +9,9 @@ export class GameGUI {
     private hpText: GUI.TextBlock;
     private ammoText: GUI.TextBlock;
     private weaponNameText: GUI.TextBlock;
+
+    // 🔹 Added for box labels
+    private boxLabels: Record<string, { weaponText: GUI.TextBlock; hpText: GUI.TextBlock }> = {};
 
     constructor() {
         this.advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -74,7 +78,7 @@ export class GameGUI {
     // **Add or Update a Player in GUI**
     updatePlayer(player: Player): void {
         if (!this.playerTextBlocks[player.id]) {
-            // **Create a new text block for the player**
+            // Create a new text block for the player
             const playerText = new GUI.TextBlock();
             playerText.height = "30px";
             playerText.color = "white";
@@ -108,7 +112,85 @@ export class GameGUI {
             this.ammoText.text = "Ammo: - / -"; // No weapon equipped
         }
     }
+
+    //
+    // Create labels for a box (Weapon Name & HP)
+    //
+    createBoxLabel(boxId: string, labelPlane: BABYLON.Mesh, weaponName: string, initialHP: number) {
+        console.log(`[GameGUI] Creating UI for box: ${boxId}, Weapon: ${weaponName}, HP: ${initialHP}`);
+
+        // 🔹 Move the labelPlane even higher above the box
+        labelPlane.position.y = 4.7;
+
+        // 🔹 Scale the label plane for better text fitting
+        labelPlane.scaling = new BABYLON.Vector3(8.0, 3.5, 1); // Increased size for better visibility
+
+        // 🔹 Create a high-resolution texture for clarity
+        const advancedTexture = GUI.AdvancedDynamicTexture.CreateForMesh(labelPlane, 4096, 2048);
+
+        // 🔹 Weapon Name Label (Doubled size)
+        const weaponText = new GUI.TextBlock();
+        weaponText.text = weaponName;
+        weaponText.color = "white";
+        weaponText.fontSize = 160; // Increased font size
+        weaponText.fontWeight = "bold";
+        weaponText.outlineWidth = 25;
+        weaponText.outlineColor = "black";
+        weaponText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        weaponText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        weaponText.top = "-100px"; // Move up for better spacing
+        advancedTexture.addControl(weaponText);
+
+        // 🔹 HP Label (Doubled size and positioned below weapon name)
+        const hpText = new GUI.TextBlock();
+        hpText.text = `HP: ${initialHP}`;
+        hpText.color = "red";
+        hpText.fontSize = 160; // Increased font size
+        hpText.fontWeight = "bold";
+        hpText.outlineWidth = 30;
+        hpText.outlineColor = "black";
+        hpText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        hpText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        hpText.top = "140px"; // Maintain proper spacing
+        advancedTexture.addControl(hpText);
+
+        // 🔹 Store labels
+        this.boxLabels[boxId] = { weaponText, hpText };
+    }
+
+
+    //
+    // Update box HP in the UI
+    //
+    updateBoxHP(boxId: string, hp: number) {
+        if (this.boxLabels[boxId]) {
+            this.boxLabels[boxId].hpText.text = `HP: ${hp}`;
+            console.log(`[GameGUI] Updated Box ${boxId} HP: ${hp}`);
+        } else {
+            console.warn(`[GameGUI] Box ${boxId} UI not found!`);
+        }
+    }
+
+
+    //
+    // Remove box UI when destroyed
+    //
+    removeBoxLabel(boxId: string) {
+        if (this.boxLabels[boxId]) {
+            console.log(`[GameGUI] Removing UI for box: ${boxId}`);
+
+            // 🔹 Dispose text controls
+            this.boxLabels[boxId].weaponText.dispose();
+            this.boxLabels[boxId].hpText.dispose();
+
+            // 🔹 Remove box UI from tracking
+            delete this.boxLabels[boxId];
+        } else {
+            console.warn(`[GameGUI] Tried to remove non-existing box UI: ${boxId}`);
+        }
+    }
+
 }
 
-// **Ensure this is a named export**
+// Ensure this is a named export
 export default GameGUI;

@@ -3,6 +3,7 @@ import "@babylonjs/loaders";
 import { GameGUI } from "./gui.ts";
 import player, { Player } from "./player.ts";
 import { Weapon } from "./weapon.ts";
+import { Box } from "./box";
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -24,6 +25,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     //
     let playerId: string = "undefined";
     var localPlayers: Record<string, Player> = {};
+
+    // box record
+    var localBoxes: Record<string, { box: BABYLON.Mesh; hp: number }> = {};
 
 
     // Get canvas element
@@ -96,6 +100,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (data.type === "assign_id") {
             playerId = data.playerId;
             console.log(`Assigned Player ID: ${playerId}`);
+        }
+
+        // Handle box spawn event
+        if (data.type === "box_spawn") {
+            console.log(`📦 Box spawned at (${data.x}, ${data.z}) containing: ${data.weapon} hp: ${data.hp}`);
+            createBox(data.x, data.z, data.weapon, data.hp);
         }
 
         // Step 2: Process all players
@@ -194,7 +204,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const keys: Record<string, boolean> = {};
     scene.onKeyboardObservable.add((kbInfo) => {
         const key = kbInfo.event.key.toLowerCase();
-        console.log("test");
         // Movement keys
         if (["a", "w", "s", "d"].includes(key)) {
             if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN) {
@@ -315,6 +324,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             angle: angle
         }));
     }
+
+    //
+    // Create a box in the scene
+    //
+    function createBox(x: number, z: number, weapon: Weapon, hp: number) {
+        const newBox = new Box(scene, x, z, weapon, hp);
+
+        // ✅ Send labelPlane to GUI
+        gui.createBoxLabel(`box_${x}_${z}`, newBox.labelPlane, weapon.name, hp);
+
+        // ✅ Store box instance
+        localBoxes[`box_${x}_${z}`] = { box: newBox.mesh, hp };
+
+        console.log(`[Game] Created box at (${x}, ${z}) containing ${weapon.name} with HP: ${hp}`);
+    }
+
+
 
     function updateCamera(playerMesh: BABYLON.Mesh): void {
         if (!playerMesh) return;
