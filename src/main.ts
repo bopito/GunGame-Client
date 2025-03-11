@@ -3,7 +3,8 @@ import "@babylonjs/loaders";
 import { GameGUI } from "./gui.ts";
 import player, { Player } from "./player.ts";
 import { Weapon } from "./weapon.ts";
-import { Box } from "./box";
+import { Box } from "./box.ts";
+import { Bullet } from "./bullet.ts";
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -28,6 +29,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // box record
     var localBoxes: Record<string, { box: BABYLON.Mesh; hp: number }> = {};
+    // List to store bullets
+    const bullets: Bullet[] = [];
 
 
     // Get canvas element
@@ -106,6 +109,60 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (data.type === "box_spawn") {
             console.log(`📦 Box spawned at (${data.x}, ${data.z}) containing: ${data.weapon} hp: ${data.hp}`);
             createBox(data.x, data.z, data.weapon, data.hp);
+        }
+
+        if (data.type === "bullet_spawn") {
+            console.log(`🔫 Bullet spawn event received!`);
+
+            // 🛠 Shooter check
+            const shooter = localPlayers[data.playerId];
+            if (!shooter) {
+                console.error(`[Bullet Debug] Shooter not found for playerId: ${data.playerId}`);
+                console.log(`[Bullet Debug] Available player IDs:`, Object.keys(localPlayers));
+                return;
+            }
+
+            if (!shooter.mesh) {
+                console.error(`[Bullet Debug] Shooter mesh is missing!`);
+                return;
+            }
+
+            if (!shooter.currentWeapon) {
+                console.error(`[Bullet Debug] Shooter does not have a weapon equipped!`);
+                return;
+            }
+
+            if (!shooter.currentWeapon.mesh) {
+                console.error(`[Bullet Debug] Shooter's weapon mesh is missing!`);
+                return;
+            }
+
+            // ✅ Check shooter and weapon positions
+            console.log(`[Bullet Debug] Shooter position:`, shooter.mesh.position);
+            console.log(`[Bullet Debug] Weapon position:`, shooter.currentWeapon.mesh.getAbsolutePosition());
+
+            // 🔹 Get weapon's absolute position
+            const weaponMesh = shooter.currentWeapon.mesh;
+            const weaponEndPosition = weaponMesh.getAbsolutePosition().clone();
+
+            // 🔹 Calculate bullet direction using character's rotation
+            let bulletDirection = new BABYLON.Vector3(
+                Math.sin(data.angle),
+                0,
+                Math.cos(data.angle)
+            ).normalize();
+
+            // ✅ Check bullet direction
+            console.log(`[Bullet Debug] Bullet direction:`, bulletDirection);
+
+            // Bullet speed and range
+            const bulletSpeed = data.speed;
+            const bulletRange = data.range;
+
+            // ✅ Create new bullet and check if it's being added
+            console.log(`[Bullet Debug] Creating bullet at:`, weaponEndPosition);
+            const bullet = new Bullet(scene, weaponEndPosition, bulletDirection, bulletSpeed, bulletRange);
+            bullets.push(bullet);
         }
 
         // Step 2: Process all players
@@ -367,15 +424,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-
+    // Update bullets in the render loop
     engine.runRenderLoop(() => {
         try {
+            // Update bullets
+            const deltaTime = engine.getDeltaTime() / 1000; // Convert to seconds
+            bullets.forEach((bullet, index) => {
+                bullet.update(deltaTime);
+                if (!bullet.isBulletActive()) {
+                    bullets.splice(index, 1); // Remove inactive bullets
+                }
+            });
+
             if (localPlayers[playerId]) {
                 gui.updateHUD(localPlayers[playerId]);
             }
             scene.render();
         } catch (error) {
-            //console.error("Error in render loop:", error);
+            console.error("Error in render loop:", error);
         }
     });
 
